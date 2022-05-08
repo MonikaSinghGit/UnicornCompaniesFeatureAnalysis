@@ -11,20 +11,638 @@ library(tidyverse)
 
 ## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r cars}
-summary(cars)
+unicorn_data=read.csv("../Unicorn_Companies_cleaned.csv")
+
+unicorn_data
+```
+
+
+```{r}
+country_group=unicorn_data%>%group_by(Country)%>%summarise(Number_companies_per_country=n())%>%arrange(desc(Number_companies_per_country))
+country_group
+
+# ggplot(data = country_group, aes(x = Country, y = Number_companies_per_country)) +
+# geom_point(aes(fill = Country))+ ggtitle("Country vr Decor") + xlab("Country")+ ylab("Number Companies") 
+
+
+ggplot(country_group[1:10,], aes(x = reorder(Country,desc(Number_companies_per_country)), y = Number_companies_per_country)) +
+  geom_col(fill = "#401ABE") +
+  labs(
+    x = "Country",
+    y = "Number Companies"
+  ) +
+  theme(
+    axis.title.x = element_text(color = "#401ABE", size = 15, face = "bold"),
+    axis.title.y = element_text(size = 15, face = "italic"),
+    #axis.text = element_text(angle = 10, hjust = 1)
+    
+  )+geom_text(aes(label=Number_companies_per_country), position=position_dodge(width=0.9), vjust=-0.25)
+
+###count percentage
+total=sum(country_group$Number_companies_per_country)
+country_group$Percentage=country_group$Number_companies_per_country*100/total
+country_group
+
+top4_other=country_group[1:4,]
+top4_sum=sum(top4_other$Number_companies_per_country)
+top4_sum
+top4_other
+top4_other=rbind(top4_other, data.frame(Country='Others', Number_companies_per_country=total-top4_sum, Percentage=(total-top4_sum)*100/total))
+
+ggplot(top4_other, aes(x = reorder(Country,desc(Percentage)), y = Number_companies_per_country)) +
+  geom_col(fill = "#401ABE") +
+  labs(
+    x = "Country",
+    y = "Number Companies"
+  ) +
+  theme(
+    axis.title.x = element_text(color = "#401ABE", size = 15, face = "bold"),
+    axis.title.y = element_text(size = 15, face = "italic"),
+    #axis.text = element_text(angle = 10, hjust = 1)
+    
+  )+geom_text(aes(label=round(Percentage)), position=position_dodge(width=0.9), vjust=-0.25)
+
+ggplot(top4_other, aes(x="", y=Percentage, fill=Country)) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0)
+
+
 ```
 
 ## Including Plots
+##Cleaning Data her
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+#install.packages("stringi")
+library(stringi)
+library(lubridate)
+
+str(unicorn_data)
+
+unique(unicorn_data$Industry)
+
+unicorn_data_updated=unicorn_data
+
+
+names(unicorn_data_updated)[names(unicorn_data_updated) == "Valuation...B."] <- "Valuation_in_B"  
+
+names(unicorn_data_updated)
+  
+
+unicorn_data_updated$Valuation_in_B <- gsub('$', '', unicorn_data_updated$Valuation_in_B, fixed = T)
+unicorn_data_updated
+
+unicorn_data_updated$Valuation_in_B <- as.numeric(unicorn_data_updated$Valuation_in_B)
+
+unicorn_data_updated$Date.Joined <- as.Date(unicorn_data_updated$Date.Joined , format = "%m/%d/%Y")
+
+
+unicorn_data_updated$Total.Raised <- gsub('$', '', unicorn_data_updated$Total.Raised, fixed = T)
+stri_sub(unicorn_data_updated$Total.Raised[1],-1)
+?stri_sub
+
+
+
+unicorn_data_updated=unicorn_data_updated%>%mutate(Total_Raised_num=stri_sub(unicorn_data_updated$Total.Raised, from=1, to=stri_length(unicorn_data_updated$Total.Raised)-1))
+
+#unicorn_data_updated = subset(unicorn_data_updated, select = -c(Total_Raised_unit) )
+
+unicorn_data_updated=unicorn_data_updated%>%mutate(Total_Raised_unit=stri_sub(unicorn_data_updated$Total.Raised,-1))
+unicorn_data_updated
+
+
+
+unicorn_data_updated$Total_Raised_num <- as.numeric(unicorn_data_updated$Total_Raised_num)
+unicorn_data_updated
+
+unicorn_data_updated
+
+unicorn_data_updated=unicorn_data_updated%>%mutate(Total_Raised_num=ifelse(Total_Raised_unit=='M',(Total_Raised_num/1000),Total_Raised_num) )
+
+unicorn_data_updated
+
+
+names(unicorn_data_updated)[names(unicorn_data_updated) == "Total_Raised_num"] <- "Total_Raised_in_B"
+unicorn_data_updated$Founded.Year=as.numeric(unicorn_data_updated$Founded.Year)
+str(unicorn_data_updated)
+
+
+
+unicorn_data_updated=unicorn_data_updated%>%mutate(number_of_years=year(unicorn_data_updated$Date.Joined)-unicorn_data_updated$Founded.Year )
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+#Heat Map
+
+# install.packages("ggplot2")
+#library(ggplot2)
+
+ggplot(unicorn_data_updated, aes(x = names(unicorn_data_updated), y = names(unicorn_data_updated), fill = cor(x,y))) +
+  geom_tile(color = "black") +
+  geom_text(aes(label = value), color = "white", size = 4) +
+  coord_fixed() 
+
+?cor()
+str(unicorn_data_updated)
+```
+
+
+```{r}
+vec=c(unicorn_data_updated$Valuation_in_B,unicorn_data_updated$number_of_years,unicorn_data_updated$Total_Raised_in_B)
+cor(vec,vec, use = "complete.obs")
+crltn
+
+cor(unicorn_data_updated$Valuation_in_B,unicorn_data_updated$number_of_years, use = "complete.obs")
+
+cor(unicorn_data_updated$Valuation_in_B,unicorn_data_updated$Total_Raised_in_B, use = "complete.obs")
+
+str(unicorn_data_updated)
+unicorn_data_updated$Investors.Count=as.numeric(unicorn_data_updated$Investors.Count)
+
+```
+
+#linear model
+```{r}
+model = lm(Valuation_in_B ~ Investors.Count , data = unicorn_data_updated) #Use the linear model function lm() to
+                                  #conduct the simple linear regression.
+summary(model)
+plot(model)
+
+plt=ggplot(data = unicorn_data_updated, aes(x = Investors.Count, y =Valuation_in_B ))+ geom_point()+ ggtitle("Number of Investors versus Valuation in Billion") + xlab("Investors.Count")+ ylab("Valuation in Billion")
+plt_con_line=plt+geom_smooth(method = lm) #confidence interval
+plt_con_line
+
+
+
+
+
+###########After removing top 0.5 percent
+AftertopXper<-function(x){
+  
+  top0.5per=x*length(unicorn_data_updated$Valuation_in_B)/100
+  thrshld_val=unicorn_data_updated$Valuation_in_B[top0.5per]
+  
+  unicorn_data_updated_99.5Valuation=unicorn_data_updated
+  unicorn_data_updated_99.5Valuation=unicorn_data_updated_99.5Valuation%>%filter(Valuation_in_B<thrshld_val)
+  
+  model1 = lm(Valuation_in_B ~ Investors.Count , data = unicorn_data_updated_99.5Valuation) #Use the linear model function lm() to
+                                  #conduct the simple linear regression.
+  print(summary(model1))
+  plot(model1)
+  
+  plt1=ggplot(data = unicorn_data_updated_99.5Valuation, aes(x = Investors.Count, y =Valuation_in_B ))+ geom_point()+ ggtitle("Number of Investors versus Valuation in Billion") + xlab("Investors.Count")+ ylab("Valuation in Billion")
+  plt_con_line1=plt1+geom_smooth(method = lm) #confidence interval
+    plt_con_line1
+    
+  }
+  
+  
+  AftertopXper(0.5)
+
+  AftertopXper(1)
+
+```
+
+#linear regression for USA
+
+```{r}
+unicorn_data_US=unicorn_data_updated%>%filter(Country=="United States")
+unicorn_data_US
+
+model_us = lm(Valuation_in_B ~ Investors.Count , data = unicorn_data_US) #Use the linear model function lm() to
+                                  #conduct the simple linear regression.
+summary(model_us)
+plot(model_us)
+
+plt=ggplot(data = unicorn_data_US, aes(x = Investors.Count, y =Valuation_in_B ))+ geom_point()+ ggtitle("Number of Investors versus Valuation in Billion") + xlab("Investors.Count")+ ylab("Valuation in Billion")
+plt_con_line=plt+geom_smooth(method = lm) #confidence interval
+plt_con_line
+
+
+
+
+
+###########After removing top 0.5 percent
+AftertopXper<-function(x){
+
+  top0.5per=x*length(unicorn_data_US$Valuation_in_B)/100
+  thrshld_val=unicorn_data_US$Valuation_in_B[top0.5per]
+
+  unicorn_data_updated_99.5Valuation=unicorn_data_US
+  unicorn_data_updated_99.5Valuation=unicorn_data_updated_99.5Valuation%>%filter(Valuation_in_B<thrshld_val)
+
+  model1 = lm(Valuation_in_B ~ Investors.Count , data = unicorn_data_updated_99.5Valuation) #Use the linear model function lm() to
+                                  #conduct the simple linear regression.
+  print(summary(model1))
+  plot(model1)
+
+  plt1=ggplot(data = unicorn_data_updated_99.5Valuation, aes(x = Investors.Count, y =Valuation_in_B ))+ geom_point()+ ggtitle("Number of Investors versus Valuation in Billion") + xlab("Investors.Count")+ ylab("Valuation in Billion")
+  plt_con_line1=plt1+geom_smooth(method = lm) #confidence interval
+    plt_con_line1
+
+  }
+
+
+  #AftertopXper(0.5)
+
+  AftertopXper(1)
+
+```
+#Linear Regression China
+
+```{r}
+
+unicorn_data_china=unicorn_data_updated%>%filter(Country=="China")
+unicorn_data_china
+
+model_us = lm(Valuation_in_B ~ Investors.Count , data = unicorn_data_china) #Use the linear model function lm() to
+                                  #conduct the simple linear regression.
+summary(model_us)
+plot(model_us)
+
+plt=ggplot(data = unicorn_data_china, aes(x = Investors.Count, y =Valuation_in_B ))+ geom_point()+ ggtitle("Number of Investors versus Valuation in Billion") + xlab("Investors.Count")+ ylab("Valuation in Billion")
+plt_con_line=plt+geom_smooth(method = lm) #confidence interval
+plt_con_line
+
+
+
+
+
+###########After removing top 0.5 percent
+AftertopXper<-function(x){
+
+  top0.5per=x*length(unicorn_data_china$Valuation_in_B)/100
+  thrshld_val=unicorn_data_china$Valuation_in_B[top0.5per]
+
+  unicorn_data_updated_99.5Valuation=unicorn_data_china
+  unicorn_data_updated_99.5Valuation=unicorn_data_updated_99.5Valuation%>%filter(Valuation_in_B<thrshld_val)
+
+  model1 = lm(Valuation_in_B ~ Investors.Count , data = unicorn_data_updated_99.5Valuation) #Use the linear model function lm() to
+                                  #conduct the simple linear regression.
+  print(summary(model1))
+  plot(model1)
+
+  plt1=ggplot(data = unicorn_data_updated_99.5Valuation, aes(x = Investors.Count, y =Valuation_in_B ))+ geom_point()+ ggtitle("Number of Investors versus Valuation in Billion") + xlab("Investors.Count")+ ylab("Valuation in Billion")
+  plt_con_line1=plt1+geom_smooth(method = lm) #confidence interval
+    plt_con_line1
+
+  }
+
+
+  #AftertopXper(0.5)
+
+  AftertopXper(1)
+
+```````
+
+
+```{r}
+#valuation vrs (Investors and years since formed)
+library(car)
+as.numeric(format(Sys.Date(), "%Y"))-unicorn_data_updated$Founded.Year
+
+unicorn_data_updated=unicorn_data_updated%>%mutate(Years_since_founded=as.numeric(format(Sys.Date(), "%Y"))-unicorn_data_updated$Founded.Year)
+unicorn_data_updated
+
+model_invstr_yr <- lm(Valuation_in_B~+Investors.Count+Years_since_founded, data = unicorn_data_updated)
+
+# Show the model.
+print(summary(model_invstr_yr))
+
+plot(model_invstr_yr)
+vif(model_invstr_yr)
+avPlot(model_invstr_yr)
+
+plt2=ggplot(data = unicorn_data_updated, aes(x = Investors.Count, y =Valuation_in_B ))+ geom_point()+ ggtitle("Number of Investors versus Valuation in Billion") + xlab("Investors.Count")+ ylab("Valuation in Billion")
+plt_con_line2=plt2+geom_smooth(method = lm) #confidence interval
+plt_con_line2
+
+```
+
+
+```{r}
+```
+
+
+
+
+
+
+
+```{r}
+
+unique(unicorn_data_updated$Industry)
+unicorn_data_updated$Industry <- gsub('Finttech', 'Fintech', unicorn_data_updated$Industry)
+
+unicorn_data_updated$Industry <- gsub('Artificial intelligence', 'Artificial Intelligence', unicorn_data_updated$Industry)
+
+
+
+
+sum(is.na(unicorn_data_updated$Industry))
+sum(is.na(unicorn_data_updated$number_of_years))
+industry_year_tmp=unicorn_data_updated%>%select(Industry,number_of_years)
+unique(industry_year_tmp$Industry)
+
+industry_year_tmp=industry_year_tmp %>% drop_na()
+sum(is.na(industry_year_tmp$number_of_years))
+sum(unicorn_data_updated$Select.Inverstors=="None")
+
+industry_year_group=industry_year_tmp%>%group_by(Industry)%>%summarise(Avg_years=mean(number_of_years))
+industry_year_group
+
+ggplot(industry_year_group, aes(x = reorder(Industry,(Avg_years)), y = Avg_years)) +
+  geom_col(fill = "#401ABE") +
+  labs(
+    x = "Industry",
+    y = "Avg years"
+  ) +
+  theme(
+    axis.title.x = element_text(color = "#401ABE", size = 15, face = "bold"),
+    axis.title.y = element_text(size = 15, face = "italic"),
+    axis.text = element_text(angle = 45, hjust = 1)
+    
+  )+geom_text(aes(label=round(Avg_years)), position=position_dodge(width=1), vjust=-0.3)
+
+
+
+
+
+```
+```{r}
+#Countrywise
+countrywise<-function(cnrty){
+  unicorn_data_updated_tmp=unicorn_data_updated%>%filter(Country==cnrty)
+
+sum(is.na(unicorn_data_updated_tmp$Industry))
+sum(is.na(unicorn_data_updated_tmp$number_of_years))
+industry_year_tmp=unicorn_data_updated_tmp%>%select(Industry,number_of_years)
+unique(industry_year_tmp$Industry)
+
+industry_year_tmp=industry_year_tmp %>% drop_na()
+sum(is.na(industry_year_tmp$number_of_years))
+sum(unicorn_data_updated_tmp$Select.Inverstors=="None")
+
+industry_year_group=industry_year_tmp%>%group_by(Industry)%>%summarise(Avg_years=mean(number_of_years),Total_companies=n())
+print(industry_year_group)
+
+ggplot(industry_year_group, aes(x = reorder(Industry,desc(Avg_years)), y = Avg_years)) +
+  geom_col(fill = "#401ABE") +
+  labs(
+    x = "Industry",
+    y = "Avg years" #,
+    #title=cnrty
+  ) +
+  theme(
+    axis.title.x = element_text( size = 15, face = "bold"),
+    axis.title.y = element_text(size = 15, face = "italic"),
+    axis.text = element_text(angle = 45, hjust = 1)
+    
+  )+geom_text(aes(label=round(Avg_years)), position=position_dodge(width=1), vjust=-0.3)
+}
+
+unique(unicorn_data_updated$Industry)
+
+
+US_df=countrywise("United States")
+China_df=countrywise("China")
+India_df=countrywise("India")
+
+
+
+
+
+#which secot is most in which country
+
+# ggplot(industry_year_group, aes(x = reorder(Industry,desc(Total_companies)), y = Avg_years)) +
+#   geom_col(fill = "#401ABE") +
+#   labs(
+#     x = "Industry",
+#     y = "Avg years" #,
+#     #title=cnrty
+#   ) +
+#   theme(
+#     axis.title.x = element_text( size = 15, face = "bold"),
+#     axis.title.y = element_text(size = 15, face = "italic"),
+#     axis.text = element_text(angle = 45, hjust = 1)
+#     
+#   )+geom_text(aes(label=round(Avg_years)), position=position_dodge(width=1), vjust=-0.3)
+
+
+
+```
+Investor's Analysis
+
+```{r}
+
+
+
+```
+
+
+
+
+Matrix creation:
+
+```{r}
+lstt=split(unicorn_data_updated$Select.Inverstors[1],",")
+lstt=unlist(lstt, recursive = TRUE, use.names = TRUE)
+
+length(lstt)
+
+
+Names <- unicorn_data_updated$Select.Inverstors[1]
+
+length(unicorn_data_updated$Select.Inverstors)
+
+lstt=strsplit(unicorn_data_updated$Select.Inverstors[1], split = ",")
+lstt[1]
+
+num_invstr_lst=c()
+for (i in 1:length(unicorn_data_updated$Select.Inverstors)) {
+  num_invstr_lst[i]=(length(unlist(strsplit(unicorn_data_updated$Select.Inverstors[i], split = ","), recursive = TRUE, use.names = TRUE)))
+}
+
+
+max(num_invstr_lst)
+```
+
+
+```{r}
+investors_seperated=separate(unicorn_data_updated, col=Select.Inverstors, into=c('Investor1', 'Investor2', 'Investor3', 'Investor4'), sep=',')
+
+inv1=c()
+
+inv1=unique(investors_seperated$Investor1)
+inv2=unique(investors_seperated$Investor2)
+inv3=unique(investors_seperated$Investor3)
+inv4=unique(investors_seperated$Investor4)
+
+str(inv1)
+
+invstr_set1=union(inv1,inv2)
+invstr_set2=union(inv3,inv4)
+
+all_unique_investors=(union(invstr_set1,invstr_set2))
+
+col_vec=c('Index',all_unique_investors)
+col_vec
+df <- data.frame(matrix(ncol = length(all_unique_investors)+1, nrow = length(all_unique_investors)))
+colnames(df) <- col_vec
+
+df
+
+df$Index <- all_unique_investors
+
+#names(df)%>%grep(" ","_")
+
+
+names(df)<-gsub(' ', '_', names(df))
+
+df$Index<-gsub(' ', '_', df$Index)
+
+df
+
+dF$Weight[which(DF$Fruits == "Sequoia_Capital_China")] <- NA
+
+
+
+investors_seperated
+
+```
+
+
+Each Investor invested in how many comparies
+
+```{r}
+
+investors_seperated
+
+group1=investors_seperated%>%group_by(Investor1)%>%summarise(num_companies=n())
+group2=investors_seperated%>%group_by(Investor2)%>%summarise(num_companies=n())
+group3=investors_seperated%>%group_by(Investor3)%>%summarise(num_companies=n())
+group4=investors_seperated%>%group_by(Investor4)%>%summarise(num_companies=n())
+
+group3$Investor3<-gsub('\t', '', group3$Investor3)
+group4$Investor4<-gsub('\t', '', group4$Investor4)
+
+names(group2)[names(group2) == "Investor2"] <- "Investor1"
+group2$Investor1<-gsub('\t', '', group2$Investor1)
+
+group2
+new_group=rbind(group1,group2)
+new_group
+group1
+group2
+
+new_group$Investor1 <- trimws(new_group$Investor1, which = c("left"))
+new_group
+
+new_group1=new_group%>% group_by(Investor1) %>% summarise(num_companies = sum(num_companies))
+
+new_group1
+
+
+names(group3)[names(group3) == "Investor3"] <- "Investor1"
+
+new_group2=rbind(new_group1,group3)
+new_group2
+new_group2$Investor1 <- trimws(new_group2$Investor1, which = c("left"))
+
+new_group3=new_group2%>%group_by(Investor1)%>%summarise(num_companies=sum(num_companies))
+new_group3
+
+
+
+names(group4)[names(group4) == "Investor4"] <- "Investor1"
+new_group3
+new_group4=rbind(new_group3,group4)
+new_group4
+new_group4$Investor1 <- trimws(new_group4$Investor1, which = c("left"))
+new_group5=new_group4%>%group_by(Investor1)%>%summarise(num_companies=sum(num_companies))
+new_group5
+
+
+final_df_all_investors_number_of_investments=new_group5
+final_df_all_investors_number_of_investments
+final_df_all_investors_number_of_investments1=final_df_all_investors_number_of_investments %>% drop_na()
+final_df_all_investors_number_of_investments1=final_df_all_investors_number_of_investments1[order(desc(final_df_all_investors_number_of_investments1$num_companies)),]
+nrow(final_df_all_investors_number_of_investments1)
+final_df_all_investors_number_of_investments1
+  
+final_df_all_investors_number_of_investments1=final_df_all_investors_number_of_investments1%>%filter(Investor1!="") 
+final_df_all_investors_number_of_investments
+
+final_df_all_investors_number_of_investments1=final_df_all_investors_number_of_investments1%>%filter(Investor1!="/td>") 
+
+final_df_all_investors_number_of_investments1
+
+final_df_all_investors_number_of_investments1$index <- 1:nrow(final_df_all_investors_number_of_investments1)
+final_df_all_investors_number_of_investments1
+
+ggplot(final_df_all_investors_number_of_investments1, aes(x=index, y=num_companies)) + geom_point()
+# Change the point size, and shape
+# ggplot(mtcars, aes(x=wt, y=mpg)) +
+#   geom_point(size=2, shape=23)
+
+
+
+```
+#Investor grouping
+
+
+```{r}
+#getAllPairFromUnicorn<-function(x){
+# A=c(Sequoia Capital China, SIG Asia Investments, Sina Weibo, Softbank Group)
+# B=c('a','b','c','d')
+xx=c("Sequoia Capital China", "SIG Asia Investments", "Sina Weibo", "Softbank Group")
+#xx<-gsub(" ","_",xx)
+unicorn_data_updated$Select.Inverstors[1]
+
+xx=unicorn_data_updated$Select.Inverstors[1]
+
+getAllPairFromUnicorn<-function(xx){
+lstt=strsplit(xx, split = ",")
+lstt[1]
+
+lstt=unlist(lstt, recursive = TRUE, use.names = TRUE)
+
+length(lstt)
+
+
+a=(combn(lstt, 2))
+df=as.data.frame(a)
+
+
+rslt=paste(df[1,],df[2,], sep = ",")
+return(rslt)
+}
+
+without_beginspace <- gsub(", ",",",unicorn_data_updated$Select.Inverstors[1])
+
+without_beginspace
+
+investors_col=gsub(", ",",",)
+
+for(i in 1:length(investors_col)){
+  print(investors_col[i])
+  if(grepl(',',investors_col[i])==TRUE){
+    getAllPairFromUnicorn      
+  }
+  
+  
+}
+
+grepl(",xx", unicorn_data_updated$Select.Inverstors[1])  
+
+
+grepl("1+2", "+")
+
+```
+
+
+
