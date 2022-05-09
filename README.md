@@ -5,8 +5,8 @@ According to Get2Growth: About 305 million startups are created annually. Accord
 
 
 - Goal:<br/>
-*Of those companies that are Unicorns, what features impact their valuation?<br/>
-*What can we learn about the investors who invest in Unicorns?<br/>
+-Of those companies that are Unicorns, what features impact their valuation?<br/>
+-What can we learn about the investors who invest in Unicorns?<br/>
 
 
 - Dataset: https://www.kaggle.com/datasets/deepcontractor/unicorn-companies-dataset (1,037 Unicorns, 13 Features)
