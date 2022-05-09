@@ -12,3 +12,4 @@ According to Get2Growth: About 305 million startups are created annually. Accord
 - Dataset: https://www.kaggle.com/datasets/deepcontractor/unicorn-companies-dataset (1,037 Unicorns, 13 Features)
 
 
+![Yearly](https://user-images.githubusercontent.com/71456314/167501906-339a6cb3-632e-4739-9611-ea06b1d9d072.jpg)
