@@ -30,3 +30,18 @@ Valuation distribution
 
 Valuation versus Number of Investors
 ![Valuatio_vrs_investors](https://user-images.githubusercontent.com/71456314/167502300-e498e013-8d3b-4816-a708-91fad16afa00.jpg)
+
+
+Multi-variable analysis<br/>
+- Analysis of number of investors and years since founding on the valuation of the company.<br/>
+- All unicorns<br/>
+Valuation = $185 million * (# of investors) + $136 million * (years since founding) – $640 million<br/>
+U.S. unicorns<br/>
+Valuation = $159 million * (# of investors) + $238 million * (years since founding) – $1.09 billion<br/>
+
+China unicorns<br/>
+Valuation = $234 million * (# of investors) + $170 million * (years since founding) – $1.17 billion<br/>
+
+
+
+
