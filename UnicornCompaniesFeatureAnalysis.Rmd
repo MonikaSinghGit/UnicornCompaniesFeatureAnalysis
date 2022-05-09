@@ -15,8 +15,17 @@ library(tidyverse)
 ```{r cars}
 unicorn_data=read.csv("../Unicorn_Companies_cleaned.csv")
 
-unicorn_data
+names(unicorn_data)
 ```
+
+Yearly graph
+
+```{r}
+
+
+
+```
+
 
 
 ```{r}
@@ -31,11 +40,11 @@ ggplot(country_group[1:10,], aes(x = reorder(Country,desc(Number_companies_per_c
   geom_col(fill = "#401ABE") +
   labs(
     x = "Country",
-    y = "Number Companies"
+    y = "Number unicorns"
   ) +
   theme(
-    axis.title.x = element_text(color = "#401ABE", size = 15, face = "bold"),
-    axis.title.y = element_text(size = 15, face = "italic"),
+    axis.title.x = element_text(size = 15),
+    axis.title.y = element_text(size = 15),
     #axis.text = element_text(angle = 10, hjust = 1)
     
   )+geom_text(aes(label=Number_companies_per_country), position=position_dodge(width=0.9), vjust=-0.25)
@@ -133,6 +142,34 @@ str(unicorn_data_updated)
 
 unicorn_data_updated=unicorn_data_updated%>%mutate(number_of_years=year(unicorn_data_updated$Date.Joined)-unicorn_data_updated$Founded.Year )
 ```
+Yearly:
+```{r}
+library(lubridate)
+a=mdy(b)
+year(a)
+year(mdy((unicorn_data$Date.Joined)))
+
+year_group=unicorn_data_updated%>%group_by(Year=year(mdy((unicorn_data$Date.Joined))))%>%summarise(Number_of_companies_yearly=n())
+
+
+ggplot(year_group, aes(x = reorder(Year,(Year)), y = Number_of_companies_yearly)) +
+  geom_col(fill = "#401ABE") +
+  labs(
+    x = "Year",
+    y = "Number of unicorns per year"
+  ) +
+  theme(
+    axis.title.x = element_text(size = 15),
+    axis.title.y = element_text(size = 15),
+    #axis.text = element_text(angle = 10, hjust = 1)
+    
+  )+geom_text(aes(label=round(Number_of_companies_yearly)), position=position_dodge(width=0.9), vjust=-0.25)
+
+
+
+```
+
+
 
 
 ```{r}
@@ -194,7 +231,7 @@ AftertopXper<-function(x){
   print(summary(model1))
   plot(model1)
   
-  plt1=ggplot(data = unicorn_data_updated_99.5Valuation, aes(x = Investors.Count, y =Valuation_in_B ))+ geom_point()+ ggtitle("Number of Investors versus Valuation in Billion") + xlab("Investors.Count")+ ylab("Valuation in Billion")
+  plt1=ggplot(data = unicorn_data_updated_99.5Valuation, aes(x = Investors.Count, y =Valuation_in_B ))+ geom_point()+ ggtitle("Number of Investors versus Valuation in Billion") + xlab("Number of Investors")+ ylab("Valuation in Billion")
   plt_con_line1=plt1+geom_smooth(method = lm) #confidence interval
     plt_con_line1
     
@@ -315,16 +352,57 @@ print(summary(model_invstr_yr))
 
 plot(model_invstr_yr)
 vif(model_invstr_yr)
-avPlot(model_invstr_yr)
+#avPlot(model_invstr_yr)
 
 plt2=ggplot(data = unicorn_data_updated, aes(x = Investors.Count, y =Valuation_in_B ))+ geom_point()+ ggtitle("Number of Investors versus Valuation in Billion") + xlab("Investors.Count")+ ylab("Valuation in Billion")
 plt_con_line2=plt2+geom_smooth(method = lm) #confidence interval
 plt_con_line2
 
 ```
-
+USA multi
 
 ```{r}
+
+# as.numeric(format(Sys.Date(), "%Y"))-unicorn_data_updated$Founded.Year
+# 
+# unicorn_data_updated=unicorn_data_updated%>%mutate(Years_since_founded=as.numeric(format(Sys.Date(), "%Y"))-unicorn_data_updated$Founded.Year)
+# unicorn_data_updated
+# 
+
+
+data_us=unicorn_data_updated%>%filter(Country=="United States")
+
+
+model_invstr_yr_us <- lm(Valuation_in_B~+Investors.Count+Years_since_founded, data = data_us)
+
+# Show the model.
+print(summary(model_invstr_yr_us))
+
+plot(model_invstr_yr_us)
+vif(model_invstr_yr_us)
+#avPlot(model_invstr_yr)
+
+plt2=ggplot(data = unicorn_data_updated, aes(x = Investors.Count, y =Valuation_in_B ))+ geom_point()+ ggtitle("Number of Investors versus Valuation in Billion") + xlab("Investors.Count")+ ylab("Valuation in Billion")
+plt_con_line2=plt2+geom_smooth(method = lm) #confidence interval
+plt_con_line2
+
+
+```
+
+China:
+
+```{r}
+data_china=unicorn_data_updated%>%filter(Country=="China")
+
+
+model_invstr_yr_china <- lm(Valuation_in_B~+Investors.Count+Years_since_founded, data = data_china)
+
+# Show the model.
+print(summary(model_invstr_yr_china))
+
+plot(model_invstr_yr_china)
+vif(model_invstr_yr_china)
+
 ```
 
 
@@ -362,8 +440,8 @@ ggplot(industry_year_group, aes(x = reorder(Industry,(Avg_years)), y = Avg_years
     y = "Avg years"
   ) +
   theme(
-    axis.title.x = element_text(color = "#401ABE", size = 15, face = "bold"),
-    axis.title.y = element_text(size = 15, face = "italic"),
+    axis.title.x = element_text(size = 15),
+    axis.title.y = element_text(size = 15),
     axis.text = element_text(angle = 45, hjust = 1)
     
   )+geom_text(aes(label=round(Avg_years)), position=position_dodge(width=1), vjust=-0.3)
@@ -592,6 +670,32 @@ ggplot(final_df_all_investors_number_of_investments1, aes(x=index, y=num_compani
 
 
 ```
+Investors Vrs Number of companies invested
+```{r}
+
+
+ggplot(final_df_all_investors_number_of_investments1[1:20,], aes(x="Investor1", y=num_companies)) +
+  geom_bar(stat="identity", width=1) +
+  coord_polar("y", start=0)
+
+ggplot(final_df_all_investors_number_of_investments1[1:20,], aes(x = reorder(Investor1,desc(num_companies)), y = num_companies)) +
+  geom_col(fill = "#401ABE") +
+  labs(
+    x = "Investors",
+    y = "Number Companies"
+  ) +
+  theme(
+    axis.title.x = element_text(color = "#401ABE", size = 15, face = "bold"),
+    axis.title.y = element_text(size = 15, face = "italic"),
+    axis.text = element_text(angle = 45, hjust = 1)
+    
+  )+geom_text(aes(label=round(num_companies)), position=position_dodge(width=0.9), vjust=-0.25)
+
+
+```
+
+
+
 #Investor grouping
 
 
@@ -599,34 +703,30 @@ ggplot(final_df_all_investors_number_of_investments1, aes(x=index, y=num_compani
 #getAllPairFromUnicorn<-function(x){
 # A=c(Sequoia Capital China, SIG Asia Investments, Sina Weibo, Softbank Group)
 # B=c('a','b','c','d')
-xx=c("Sequoia Capital China", "SIG Asia Investments", "Sina Weibo", "Softbank Group")
-#xx<-gsub(" ","_",xx)
-unicorn_data_updated$Select.Inverstors[1]
-
-xx=unicorn_data_updated$Select.Inverstors[1]
+# xx=c("Sequoia Capital China", "SIG Asia Investments", "Sina Weibo", "Softbank Group")
+# #xx<-gsub(" ","_",xx)
+# unicorn_data_updated$Select.Inverstors[1]
+# 
+# xx=unicorn_data_updated$Select.Inverstors[1]
 
 getAllPairFromUnicorn<-function(xx){
-lstt=strsplit(xx, split = ",")
-lstt[1]
-
-lstt=unlist(lstt, recursive = TRUE, use.names = TRUE)
-
-length(lstt)
-
-
-a=(combn(lstt, 2))
-df=as.data.frame(a)
-
-
-rslt=paste(df[1,],df[2,], sep = ",")
-return(rslt)
+  #print(xx)
+  xx<-gsub(", ",",",xx)
+  #print(xx)
+  lstt=strsplit(xx, split = ",")
+  #lstt[1]
+  lstt=unlist(lstt, recursive = TRUE, use.names = TRUE)
+  length(lstt)
+  
+  lstt=sort(lstt)
+  
+  a=(combn(lstt, 2))
+  df=as.data.frame(a)
+  rslt=paste(df[1,],df[2,], sep = ",")
+  return(rslt)
 }
 
-without_beginspace <- gsub(", ",",",unicorn_data_updated$Select.Inverstors[1])
-
-without_beginspace
-
-investors_col=gsub(", ",",",)
+getAllPairFromUnicorn(unicorn_data_updated$Select.Inverstors[3])
 
 for(i in 1:length(investors_col)){
   print(investors_col[i])
@@ -637,12 +737,274 @@ for(i in 1:length(investors_col)){
   
 }
 
-grepl(",xx", unicorn_data_updated$Select.Inverstors[1])  
 
 
-grepl("1+2", "+")
+###############################
+
+tuple_investors <- data.frame(Tuple=character(),
+                 Tuple_count=integer())
+
+
+names(tuple_investors)
+
+
+for(i in 1:length(investors_col)){
+  #print(investors_col[i])
+  if(grepl(',',investors_col[i])==TRUE){
+    print(getAllPairFromUnicorn(investors_col[i]))
+    
+    
+    
+    ##########################################################
+    tpl_set=getAllPairFromUnicorn(investors_col[i])
+    sz=length(tpl_set)
+    for(j in 1:sz){
+      print(tpl_set[j])
+      
+      if(tpl_set[j] %in% tuple_investors$Tuple){
+        val=as.numeric(tuple_investors[tuple_investors$Tuple==tpl_set[j], "Tuple_count"])
+        tuple_investors[tuple_investors$Tuple==tpl_set[j], "Tuple_count"]<-val+1
+        
+      }else{
+        tuple_investors[nrow(tuple_investors) + 1,] <- c(tpl_set[j],1)
+      }
+      
+    }
+    
+    ##########################################################
+    
+  }
+  
+  
+}
+
+tuple_investors2=tuple_investors
+
+tuple_investors2=tuple_investors2[order(desc(tuple_investors2$Tuple_count)),]
+nrow(tuple_investors2)
+tuple_investors2
+
+
+tuple_investors2$index <- 1:nrow(tuple_investors2)
+tuple_investors2
+
+ggplot(tuple_investors2, aes(x=index, y=Tuple_count)) + geom_point()
+
+
+
+# df_test <- data.frame(Tuple=character(),
+#                  Tuple_count=integer())
+# df_test$Tuple
+# 
+# tpl_set=getAllPairFromUnicorn(investors_col[1])
+# sz=length(tpl_set)
+# for(i in 1:sz){
+#   print(tpl_set[i])
+#   
+#   if(tpl_set[i] %in% df_test$Tuple){
+#     val=as.numeric(df_test[df_test$Tuple==tpl_set[i], "Tuple_count"])
+#     df_test[df_test$Tuple==tpl_set[i], "Tuple_count"]<-val+1
+#     
+#   }else{
+#     df_test[nrow(df_test) + 1,] <- c(tpl_set[i],1)
+#   }
+#   
+# }
+# 
+# 
+# 
+# 
+# 
+# df_test
+
+
+
+
+
+
 
 ```
+
+
+
+
+Tuple analysis (cleaned code)
+```{r}
+
+getAllPairFromUnicorn<-function(xx){
+  xx<-gsub(", ",",",xx)
+  lstt=strsplit(xx, split = ",")
+  lstt=unlist(lstt, recursive = TRUE, use.names = TRUE)
+  length(lstt)
+  lstt=sort(lstt)
+  a=(combn(lstt, 2))
+  df=as.data.frame(a)
+  rslt=paste(df[1,],df[2,], sep = ",")
+  return(rslt)
+}
+
+getAllTripletFromUnicorn<-function(xx){
+  xx<-gsub(", ",",",xx)
+  lstt=strsplit(xx, split = ",")
+  lstt=unlist(lstt, recursive = TRUE, use.names = TRUE)
+  length(lstt)
+  lstt=sort(lstt)
+  print(lstt)
+  a=(combn(lstt, 3))
+  df=as.data.frame(a)
+  rslt=paste(df[1,],df[2,],df[3,], sep = ",")
+  return(rslt)
+}
+
+getAllFourFromUnicorn<-function(xx){
+  xx<-gsub(", ",",",xx)
+  lstt=strsplit(xx, split = ",")
+  lstt=unlist(lstt, recursive = TRUE, use.names = TRUE)
+  length(lstt)
+  lstt=sort(lstt)
+  print(lstt)
+  a=(combn(lstt, 4))
+  df=as.data.frame(a)
+  rslt=paste(df[1,],df[2,],df[3,],df[4,], sep = ",")
+  return(rslt)
+}
+
+
+
+print(unicorn_data_updated$Select.Inverstors[1])
+
+print(getAllTripletFromUnicorn(unicorn_data_updated$Select.Inverstors[1]))
+
+
+
+tupleCountFunc<-function(investors_col,tple_size){
+  
+  tuple_investors <- data.frame(Tuple=character(),
+                 Tuple_count=integer())
+
+
+for(i in 1:length(investors_col)){
+  
+  comm_cont=str_count(unicorn_data_updated$Select.Inverstors[i], ',')
+  
+  #if(grepl(',',investors_col[i])==TRUE){
+  if(comm_cont>=(tple_size-1)){
+    print(comm_cont)
+    print(tple_size-1)
+    
+    if(tple_size==2){
+      tpl_set=getAllPairFromUnicorn(investors_col[i])
+    }else if(tple_size==3){
+      tpl_set=getAllTripletFromUnicorn(investors_col[i])
+    }else if(tple_size==4){
+       tpl_set=getAllFourFromUnicorn(investors_col[i])
+    }else{
+       tpl_set=getAllPairFromUnicorn(investors_col[i])
+    }
+    
+    sz=length(tpl_set)
+    for(j in 1:sz){
+      if(tpl_set[j] %in% tuple_investors$Tuple){
+        val=as.numeric(tuple_investors[tuple_investors$Tuple==tpl_set[j], "Tuple_count"])
+        tuple_investors[tuple_investors$Tuple==tpl_set[j], "Tuple_count"]<-val+1
+        
+      }else{
+        tuple_investors[nrow(tuple_investors) + 1,] <- c(tpl_set[j],1)
+      }
+      
+    }
+    
+  }
+  
+  
+}
+  return(tuple_investors)
+  
+}
+
+########two tuple################
+
+tuple_investors2=tupleCountFunc(unicorn_data_updated$Select.Inverstors,2)
+
+tuple_investors2=tuple_investors2[order(desc(tuple_investors2$Tuple_count)),]
+nrow(tuple_investors2)
+tuple_investors2
+
+
+tuple_investors2$index <- 1:nrow(tuple_investors2)
+tuple_investors2
+
+ggplot(tuple_investors2, aes(x=index, y=Tuple_count)) + geom_point()
+
+#########three tuple###############
+tuple_investors3=tupleCountFunc(unicorn_data_updated$Select.Inverstors,3)
+tuple_investors3
+
+tuple_investors3=tuple_investors3[order(desc(tuple_investors3$Tuple_count)),]
+nrow(tuple_investors3)
+tuple_investors3
+
+#########Four tuple###############
+tuple_investors4=tupleCountFunc(unicorn_data_updated$Select.Inverstors,4)
+tuple_investors4
+
+tuple_investors4=tuple_investors4[order(desc(tuple_investors4$Tuple_count)),]
+nrow(tuple_investors4)
+tuple_investors4
+
+```
+
+
+```{r}
+tuple_investors2
+
+#tuple_investors2 %>% separate(Tuple, c('Investor1', 'Investor2'))
+tuple_investors2[c('Investor1', 'Investor2')] <- str_split_fixed(tuple_investors2$Tuple, ',', 2)
+investor_input <- readline(prompt="Enter investor name: ")
+tuple_investors2%>%filter(Investor1==investor_input)
+
+accel_partners=tuple_investors2%>%filter(Investor1=="Accel")
+accel_partners_top=accel_partners%>%filter(Tuple_count>=2)
+
+ggplot(accel_partners_top, aes(x = reorder(Investor2,desc(Tuple_count)), y = Tuple_count)) +
+  geom_col(fill = "#401ABE") +
+  labs(
+    x = "Investors",
+    y = "Number Companies Invested Together"
+  ) +
+  theme(
+    axis.title.x = element_text(color = "#401ABE", size = 15, face = "bold"),
+    axis.title.y = element_text(size = 15, face = "italic"),
+    axis.text = element_text(angle = 45, hjust = 1)
+    
+  )+geom_text(aes(label=Tuple_count), position=position_dodge(width=0.9), vjust=-0.25)
+
+
+
+
+#################### Tiger Global Management
+
+tiger_partners=tuple_investors2%>%filter(Investor1=="Tiger Global Management")
+tiger_partners_top=accel_partners%>%filter(Tuple_count>=2)
+
+ggplot(tiger_partners_top, aes(x = reorder(Investor2,desc(Tuple_count)), y = Tuple_count)) +
+  geom_col(fill = "#401ABE") +
+  labs(
+    x = "Investors",
+    y = "Number Companies Invested Together"
+  ) +
+  theme(
+    axis.title.x = element_text(color = "#401ABE", size = 15, face = "bold"),
+    axis.title.y = element_text(size = 15, face = "italic"),
+    axis.text = element_text(angle = 45, hjust = 1)
+    
+  )+geom_text(aes(label=Tuple_count), position=position_dodge(width=0.9), vjust=-0.25)
+
+
+
+
+```
+
 
 
 
