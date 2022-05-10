@@ -38,9 +38,11 @@ Multi-variable analysis<br/>
 Valuation = $185 million * (# of investors) + $136 million * (years since founding) – $640 million<br/>
 U.S. unicorns<br/>
 Valuation = $159 million * (# of investors) + $238 million * (years since founding) – $1.09 billion<br/>
-
 China unicorns<br/>
 Valuation = $234 million * (# of investors) + $170 million * (years since founding) – $1.17 billion<br/>
+
+The top 20 unicorn investors
+![Investor3](https://user-images.githubusercontent.com/71456314/167503054-fc510dd5-2949-4c2f-ac70-c6b4063674b6.jpg)
 
 
 
